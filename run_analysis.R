@@ -1,42 +1,58 @@
-xtest<-read.table("./UCI HAR Dataset/test/X_test.txt")
-ytest<-read.table("./UCI HAR Dataset/test/y_test.txt")
-mergedatatest<-cbind(xtest,ytest)
+# Source of data for the project:
+# https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
+# This R script does the following:
+# 1. Merges the training and the test sets to create one data set.
 
-xtrain<-read.table("./UCI HAR Dataset/train/X_train.txt")
-ytrain<-read.table("./UCI HAR Dataset/train/y_train.txt")
-mergedatatrain<-cbind(xtrain,ytrain)
+tmp1 <- read.table("./UCI HAR Dataset/train/X_train.txt")
+tmp2 <- read.table("./UCI HAR Dataset/test/X_test.txt")
+X <- rbind(tmp1, tmp2)
 
-mergedata<-rbind(mergedatatest,mergedatatrain)
-feature<-xtest<-read.table("./UCI HAR Dataset/features.txt")
-mean<-grep("mean()", feature[,2])
-std<- grep("std()", feature[,2])
-meanstd<- append(c(mean), c(std))
+tmp1 <- read.table("./UCI HAR Dataset/train/subject_train.txt")
+tmp2 <- read.table("./UCI HAR Dataset/test/subject_test.txt")
+S <- rbind(tmp1, tmp2)
 
-keydata<-mergedata[,c(meanstd)]
-keydata<-cbind(keydata,mergedata[,562])
+tmp1 <- read.table("./UCI HAR Dataset/train/y_train.txt")
+tmp2 <- read.table("./UCI HAR Dataset/test/y_test.txt")
+Y <- rbind(tmp1, tmp2)
 
-subject_test<-read.table("./UCI HAR Dataset/test/subject_test.txt")
-subject_train<-read.table("./UCI HAR Dataset/train/subject_train.txt")
-subject<-rbind(subject_test,subject_train)
+# 2. Extracts only the measurements on the mean and standard deviation for each measurement.
 
-keydata2<-cbind(subject,keydata)
+features <- read.table("./UCI HAR Dataset/features.txt")
+indices_of_good_features <- grep("-mean\\(\\)|-std\\(\\)", features[, 2])
+X <- X[, indices_of_good_features]
+names(X) <- features[indices_of_good_features, 2]
+names(X) <- gsub("\\(|\\)", "", names(X))
+names(X) <- tolower(names(X))  # see last slide of the lecture Editing Text Variables (week 4)
 
-x<-as.numeric(meanstd)
-y<-feature[,2][c(x)]
-y<-as.character(y)
-names(keydata2)[2:80]<-y
-names(keydata2)[1]<-"SubjectId"
-names(keydata2)[81]<-"Activity"
+# 3. Uses descriptive activity names to name the activities in the data set
 
-keydata2$Activity <- as.character(keydata2$Activity)
-keydata2$Activity[keydata2$Activity  == "1"] <- "WALKING"
-keydata2$Activity[keydata2$Activity  == "2"] <- "WALKING_UPSTAIRS"
-keydata2$Activity[keydata2$Activity  == "3"] <- "WALKING_DOWNSTAIRS"
-keydata2$Activity[keydata2$Activity  == "4"] <- "SITTING"
-keydata2$Activity[keydata2$Activity  == "5"] <- "STANDING"
-keydata2$Activity[keydata2$Activity  == "6"] <- "LAYING"
+activities <- read.table("./UCI HAR Dataset/activity_labels.txt")
+activities[, 2] = gsub("_", "", tolower(as.character(activities[, 2])))
+Y[,1] = activities[Y[,1], 2]
+names(Y) <- "activity"
 
-library(reshape2)
-keydata4<-melt(keydata2,id.vars=c("SubjectId","Activity"))
-keydata5<-dcast(keydata4, SubjectId + Activity ~ variable,mean)
-write.table(keydata4,file="tidydata.txt")
+# 4. Appropriately labels the data set with descriptive activity names.
+
+names(S) <- "subject"
+cleaned <- cbind(S, Y, X)
+write.table(cleaned, "./UCI HAR Dataset/merged_clean_data.txt")
+
+# 5. Creates a 2nd, independent tidy data set with the average of each variable for each activity and each subject.
+
+uniqueSubjects = unique(S)[,1]
+numSubjects = length(unique(S)[,1])
+numActivities = length(activities[,1])
+numCols = dim(cleaned)[2]
+result = cleaned[1:(numSubjects*numActivities), ]
+
+row = 1
+for (s in 1:numSubjects) {
+  for (a in 1:numActivities) {
+    result[row, 1] = uniqueSubjects[s]
+    result[row, 2] = activities[a, 2]
+    tmp <- cleaned[cleaned$subject==s & cleaned$activity==activities[a, 2], ]
+    result[row, 3:numCols] <- colMeans(tmp[, 3:numCols])
+    row = row+1
+  }
+}
+write.table(result, "TidyData.txt")
