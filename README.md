@@ -1,58 +1,33 @@
 Details of Data
 =================
 
-The features selected for this database come from the accelerometer and gyroscope 3-axial raw signals tAcc-XYZ and tGyro-XYZ. These time domain signals (prefix 't' to denote time) were captured at a constant rate of 50 Hz. Then they were filtered using a median filter and a 3rd order low pass Butterworth filter with a corner frequency of 20 Hz to remove noise. Similarly, the acceleration signal was then separated into body and gravity acceleration signals (tBodyAcc-XYZ and tGravityAcc-XYZ) using another low pass Butterworth filter with a corner frequency of 0.3 Hz. 
+Running the script
 
-Subsequently, the body linear acceleration and angular velocity were derived in time to obtain Jerk signals (tBodyAccJerk-XYZ and tBodyGyroJerk-XYZ). Also the magnitude of these three-dimensional signals were calculated using the Euclidean norm (tBodyAccMag, tGravityAccMag, tBodyAccJerkMag, tBodyGyroMag, tBodyGyroJerkMag). 
+Clone this repository
+Download the data set and extract. It should result in a UCI HAR Dataset folder that has all the files in the required structure.
+Change current directory to the UCI HAR Dataset folder.
+Run Rscript <path to>/run_analysis.R
+The tidy dataset should get created in the current directory as tidy.txt
+Assumptions
 
-Finally a Fast Fourier Transform (FFT) was applied to some of these signals producing fBodyAcc-XYZ, fBodyAccJerk-XYZ, fBodyGyro-XYZ, fBodyAccJerkMag, fBodyGyroMag, fBodyGyroJerkMag. (Note the 'f' to indicate frequency domain signals). 
+The training and test data are available in folders named train and test respectively.
+For each of these data sets:
+Measurements are present in X_<dataset>.txt file
+Subject information is present in subject_<dataset>.txt file
+Activity codes are present in y_<dataset>.txt file
+All activity codes and their labels are in a file named activity_labels.txt.
+Names of all measurements taken are present in file features.txt ordered and indexed as they appear in the X_<dataset>.txt files.
+All columns representing means contain ...mean() in them.
+All columns representing standard deviations contain ...std() in them.
+Data Preparation Steps
 
-These signals were used to estimate variables of the feature vector for each pattern:  
-'-XYZ' is used to denote 3-axial signals in the X, Y and Z directions.
-
-tBodyAcc-XYZ
-tGravityAcc-XYZ
-tBodyAccJerk-XYZ
-tBodyGyro-XYZ
-tBodyGyroJerk-XYZ
-tBodyAccMag
-tGravityAccMag
-tBodyAccJerkMag
-tBodyGyroMag
-tBodyGyroJerkMag
-fBodyAcc-XYZ
-fBodyAccJerk-XYZ
-fBodyGyro-XYZ
-fBodyAccMag
-fBodyAccJerkMag
-fBodyGyroMag
-fBodyGyroJerkMag
-
-The set of variables that were estimated from these signals are: 
-
-mean(): Mean value
-std(): Standard deviation
-mad(): Median absolute deviation 
-max(): Largest value in array
-min(): Smallest value in array
-sma(): Signal magnitude area
-energy(): Energy measure. Sum of the squares divided by the number of values. 
-iqr(): Interquartile range 
-entropy(): Signal entropy
-arCoeff(): Autorregresion coefficients with Burg order equal to 4
-correlation(): correlation coefficient between two signals
-maxInds(): index of the frequency component with largest magnitude
-meanFreq(): Weighted average of the frequency components to obtain a mean frequency
-skewness(): skewness of the frequency domain signal 
-kurtosis(): kurtosis of the frequency domain signal 
-bandsEnergy(): Energy of a frequency interval within the 64 bins of the FFT of each window.
-angle(): Angle between to vectors.
-
-Additional vectors obtained by averaging the signals in a signal window sample. These are used on the angle() variable:
-
-gravityMean
-tBodyAccMean
-tBodyAccJerkMean
-tBodyGyroMean
-tBodyGyroJerkMean
-
+For each of the training and test datasets,
+Read the X values
+Take a subset of the columns representing only the mean and standard deviation values. Subsetting is done early on to conserve memory.
+Associate additional columns to represent activity IDs and subject IDs read from y_<dataset>.txt and subject_<dataset>.txt files respectively.
+Assign column names by manipulating the measurement names in features.txt to remove spaces and convert them to camel case.
+Merge the training and the test sets, read as in step 1 to create one data set.
+Associate an additional column with descriptive activity names as specified in activity_labels.txt.
+Melt the dataset by specifying activity ID, name and subject ID as the only ID variables.
+Re cast the melted dataset with activity name and subject id as the only IDs and mean as the aggregator function.
+Save the resultin re-casted dataset as tidy.txt
